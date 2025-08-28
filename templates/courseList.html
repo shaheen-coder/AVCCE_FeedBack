@@ -1,0 +1,115 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <meta name="csrfmiddlewaretoken" content="{{ csrf_token }}">
+    <title>Course List</title>
+    <script src="{% static 'js/env.js' %}"></script>
+</head>
+
+<body class="bg-blue-500 h-screen p-5">
+    <div
+        class="mx-auto md:w-1/2 flex flex-col items-center space-y-5 mt-20 p-5 rounded-lg bg-gradient-to-r from-blue-200/50 to-blue-200/10">
+        <h1 class="text-5xl text-blue-600 font-bold select-none">Course list</h1>
+
+        <!-- note the id on the UL -->
+        <ul id="course_disp" class="menu menu-xl rounded-box w-[80%] min-h-50">
+            <li
+                class="border-2 text-center px-5 py-2 rounded-lg m-1 text-blue-50 font-semibold font-mono hover:shadow-lg hover:bg-blue-400 hover:border-white text-xl font-semibold text-blue-500 hover:text-white bg-blue-50 hover:border-blue-500 active:bg-blue-200 active:scale-95 select-none">
+                <a>Open Elective</a>
+            </li>
+            <li
+                class="border-2 text-center px-5 py-2 rounded-lg m-1 text-blue-50 font-semibold font-mono hover:shadow-lg hover:bg-blue-400 hover:border-white text-xl font-semibold text-blue-500 hover:text-white bg-blue-50 hover:border-blue-500 active:bg-blue-200 active:scale-95 select-none">
+                <a>Elective Course</a>
+            </li>
+            <li
+                class="border-2 text-center px-5 py-2 rounded-lg m-1 text-blue-50 font-semibold font-mono hover:shadow-lg hover:bg-blue-400 hover:border-white text-xl font-semibold text-blue-500 hover:text-white bg-blue-50 hover:border-blue-500 active:bg-blue-200 active:scale-95 select-none">
+                <a>Mandatory Course</a>
+            </li>
+        </ul>
+    </div>
+
+</body>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const FEED_URL = API_URL + '/feed/';
+        const SEARCH_URL = API_URL + '/api/universal-search/';
+
+        // grab CSRF token from your <meta> tag
+        const csrftoken = document
+            .querySelector('meta[name="csrfmiddlewaretoken"]')
+            .getAttribute('content');
+
+        // map your cid to the right code
+        const ctype = {
+            1: 'M',
+            2: 'E',
+            3: 'OE'
+        };
+
+        // build the POST payload
+        const payload = {
+            mode: 'sub',
+            course_type: ctype[{{ cid }}],
+        dept: "{{ student.student.dept }}",
+        semester: {{ student.semester }}
+    };
+
+    // target the UL
+    const listEl = document.getElementById('course_disp');
+
+    fetch(SEARCH_URL, {
+        method: 'POST',
+        credentials: 'include',               // sends cookies if needed
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify(payload)
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Network response was ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // clear any existing items (optional)
+            listEl.innerHTML = '';
+
+            if (data && Array.isArray(data.datas)) {
+                data.datas.forEach(course => {
+                    // build <li><a>…</a></li>
+                    const li = document.createElement('li');
+                    li.className = `
+            border-2 text-center px-5 py-2 rounded-lg m-1
+            font-semibold font-mono text-xl select-none
+            hover:shadow-lg hover:bg-blue-400 hover:border-white
+            text-blue-500 hover:text-white bg-blue-50
+            hover:border-blue-500 active:bg-blue-200 active:scale-95
+          `.trim().replace(/\s+/g, ' ');
+
+                    const a = document.createElement('a');
+                    a.href = `${FEED_URL}${course.code}/`;
+                    a.textContent = course.name;
+
+                    li.appendChild(a);
+                    listEl.appendChild(li);
+                });
+            } else {
+                listEl.innerHTML = '<p>Could not load courses. Please check the API response.</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Fetch error:', err);
+            listEl.innerHTML = '<p>Error fetching courses. Please try again later.</p>';
+        });
+  });
+</script>
+
+</html>

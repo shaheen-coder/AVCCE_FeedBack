@@ -1,0 +1,133 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Report</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <script src="{% static 'js/env.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        .chart-box {
+            height: 200px;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 text-gray-800">
+    <!-- Nav bar -->
+    <div class="bg-white rounded-xl shadow p-4 text-center text-lg font-semibold flex justify-between">
+        <h1 class="flex items-center">
+            <img class="w-10"
+                src="https://images.crunchbase.com/image/upload/c_pad,f_auto,q_auto:eco,dpr_1/g4fs8q57tzijze51i0iy"
+                alt=""> AVC ADMIN
+        </h1>
+        <div class="flex space-x-5 items-center">
+            <a href="/hoc/" class="hover:underline">Home</a>
+            <a href="{% url 'admin:index' %}" class="hover:underline">Data Center</a>
+            <button class="ring-2 ring-green-500 px-3 rounded-md text-green-500 hover:text-white hover:bg-green-500"
+                id="downloadPdf">Download</button>
+            <button class="ring-2 ring-red-500 px-3 rounded-md text-red-500 hover:text-white hover:bg-red-500">Log
+                Out</button>
+        </div>
+    </div>
+    <div class="max-w-7xl mx-auto p-6 space-y-6" id="print-container">
+
+        <!-- Info Box -->
+        <div class="bg-white rounded-xl shadow p-4 text-center text-lg font-semibold" id="user-info">
+
+        </div>
+        <!-- Table -->
+        <div class="overflow-auto bg-white rounded-xl shadow mt-6">
+            <table class="min-w-full table-auto border-collapse border border-gray-300 text-center">
+                <thead class="bg-gray-200">
+                    <tr>
+                        <th class="border border-gray-300 p-2">Cat</th>
+                        <th class="border border-gray-300 p-2">5</th>
+                        <th class="border border-gray-300 p-2">3</th>
+                        <th class="border border-gray-300 p-2">1</th>
+                        <th class="border border-gray-300 p-2">Avg</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</body>
+
+<script>
+    function getCSRFToken() {
+        return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    }
+
+    const URL = API_URL + 'staff/api/student/report/';
+    const INFO_URL = API_URL + 'api/info/{{id}}/';
+    const data = {
+        student_id: {{ id }},
+    batch: "{{batch}}"
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const csrftoken = getCSRFToken();
+        fetch(INFO_URL).then(response => response.json()).then(data => {
+            let info = document.getElementById('user-info');
+            info.innerHTML = `
+                Regno : <span class="font-bold">${data.student.regno}</span> |
+                Name : <span class="font-bold">${data.student.name}</span> |
+                Department: <span class="font-bold">${data.student.dept}</span> | 
+                Batch: <span class="font-bold">{{batch}}</span>
+            `;
+        });
+
+        fetch(URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.json();
+            })
+            .then(json => {
+                const tbody = document.querySelector('table tbody');
+                tbody.innerHTML = '';
+                Object.entries(json).forEach(([course, stats]) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                    <td class="border p-2">${course}</td>
+                    <td class="border p-2">${stats['5s'].toFixed(2)}%</td>
+                    <td class="border p-2">${stats['3s'].toFixed(2)}%</td>
+                    <td class="border p-2">${stats['1s'].toFixed(2)}%</td>
+                    <td class="border p-2">${stats['avg'].toFixed(2)}</td>
+                `;
+                    tbody.appendChild(tr);
+                });
+            })
+            .catch(err => console.error('Dashboard error:', err));
+    });
+    document.getElementById('downloadPdf').addEventListener('click', function () {
+            const element = document.getElementById('print-container');
+            const options = {
+                margin: 1,
+                filename: `report-${data.student_id}-${data.batch}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
+            };
+
+            html2pdf().from(element).set(options).save();
+    });
+</script>
+
+</html>

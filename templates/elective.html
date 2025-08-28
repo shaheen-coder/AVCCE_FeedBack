@@ -1,0 +1,100 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrfmiddlewaretoken" content="{{ csrf_token }}">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <title>Extra Course </title>
+    <script src="{% static 'js/env.js' %}"></script>
+</head>
+
+<body class="bg-blue-500 h-screen p-5">
+
+
+    <div
+        class="mx-auto md:w-1/2 flex flex-col items-center space-y-5 mt-20 p-5 rounded-lg  bg-gradient-to-r from-blue-200/50 to-blue-200/10 ">
+
+        <h1 class="text-5xl text-blue-600 font-bold select-none">Elective Courses</h1>
+
+        <ul class="menu menu-xl rounded-box w-56 min-h-50">
+            <li
+                class="border-2 px-5 py-2 rounded-lg m-1 text-blue-50 font-mono hover:shadow-lg hover:text-blue-500 hover:bg-blue-50 hover:border-blue-500 active:bg-blue-200 active:scale-95 select-none font-bold text-xl">
+                <a href="{% url 'course-list' 3 %}">Open Elective</a>
+            </li>
+            <li
+                class="border-2 px-5 py-2 rounded-lg m-1 text-blue-50 font-mono hover:shadow-lg hover:text-blue-500 hover:bg-blue-50 hover:border-blue-500 active:bg-blue-200 active:scale-95 select-none font-bold text-xl">
+                <a href="{% url 'course-list' 2 %}">Elective Course</a>
+            </li>
+            <li
+                class="border-2 px-5 py-2 rounded-lg m-1 text-blue-50 font-mono hover:shadow-lg hover:text-blue-500 hover:bg-blue-50 hover:border-blue-500 active:bg-blue-200 active:scale-95 select-none font-bold text-xl">
+                <a href="{% url 'course-list' 1 %}">Mandatory Course</a>
+            </li>
+        </ul>
+
+        <button
+            class="font-medium  bg-gradient-to-r from-blue-500 to-blue-600 text-2xl active:scale-95 text-white px-5 py-1 rounded-lg "
+            id="done-btn"> Done </button>
+    </div>
+</body>
+<!-- assume this lives below your <meta name="csrfmiddlewaretoken"> -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        //–– Constants & DOM refs
+        const csrftoken = document.querySelector('meta[name="csrfmiddlewaretoken"]').content;
+        const STATUS_URL = `${API_URL}api/feed/status/`;
+        const STUDENT_ID = {{ request.session.student_id }};
+        const FEED_NO = {{ request.session.student_feedno }};
+        const doneBtn = document.getElementById('done-btn');
+
+        if (!doneBtn) return;
+
+        //–– Handler
+        doneBtn.addEventListener('click', async event => {
+            event.preventDefault();
+            doneBtn.disabled = true;
+
+            const payload = {
+                id: STUDENT_ID,
+                feedno: FEED_NO
+            };
+
+            try {
+                const res = await fetch(STATUS_URL, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    // try to pull out error details
+                    const text = await res.text();
+                    console.error('Status update failed:', res.status, text);
+                    alert('Could not submit feedback. Please try again.');
+                    return;
+                }
+
+                const json = await res.json();
+                console.log('Server response:', json);
+                alert('Thank you for your feedback!');
+                window.location.href = API_URL;
+
+            } catch (err) {
+                console.error('Network or parse error:', err);
+                alert('A network error occurred. Please check your connection and try again.');
+            } finally {
+                doneBtn.disabled = false;
+            }
+        });
+    });
+</script>
+
+
+</html>

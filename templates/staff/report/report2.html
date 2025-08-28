@@ -1,0 +1,218 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Report</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <script src="{% static 'js/env.js' %}"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    .chart-box {
+      height: 200px;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100 text-gray-800">
+  <!-- Nav bar -->
+  <div class="bg-white rounded-xl shadow p-4 text-center text-lg font-semibold flex justify-between">
+    <h1 class="flex items-center">
+      <img class="w-10"
+        src="https://images.crunchbase.com/image/upload/c_pad,f_auto,q_auto:eco,dpr_1/g4fs8q57tzijze51i0iy" alt=""> AVC
+      ADMIN
+    </h1>
+    <div class="flex space-x-5 items-center">
+      <a href="/hoc/" class="hover:underline">Home</a>
+      <a href="{% url 'admin:index' %}" class="hover:underline">Data Center</a>
+      <button class="ring-2 ring-green-500 px-3 rounded-md text-green-500 hover:text-white hover:bg-green-500"
+        id="downloadPdf">Download</button>
+      <button class="ring-2 ring-red-500 px-3 rounded-md text-red-500 hover:text-white hover:bg-red-500">Log
+        Out</button>
+    </div>
+  </div>
+  <div class="max-w-7xl mx-auto p-6 space-y-6" id="print-container">
+
+    <!-- Info Box -->
+    <div class="bg-white rounded-xl shadow p-4 text-center text-lg font-semibold" id="user-info">
+    </div>
+
+    <!-- 5x2 Grid of Bar Charts -->
+    <!-- 5x2 Grid of Bar Charts -->
+    <div class="grid grid-cols-10 gap-4">
+      <div class="bg-white p-2 rounded shadow h-[15vh] m-1 w-[7vw] chart-box"><canvas id="chart1"></canvas></div>
+      <div class="bg-white p-2 rounded shadow h-[15vh] m-1 w-[7vw] chart-box"><canvas id="chart2"></canvas></div>
+      <div class="bg-white p-2 rounded shadow h-[15vh] m-1 w-[7vw] chart-box"><canvas id="chart3"></canvas></div>
+      <div class="bg-white p-2 rounded shadow h-[15vh] m-1 w-[7vw] chart-box"><canvas id="chart4"></canvas></div>
+      <div class="bg-white p-2 rounded shadow h-[15vh] m-1 w-[7vw] chart-box"><canvas id="chart5"></canvas></div>
+      <div class="bg-white p-2 rounded shadow h-[15vh] m-1 w-[7vw] chart-box"><canvas id="chart6"></canvas></div>
+      <div class="bg-white p-2 rounded shadow h-[15vh] m-1 w-[7vw] chart-box"><canvas id="chart7"></canvas></div>
+      <div class="bg-white p-2 rounded shadow h-[15vh] m-1 w-[7vw] chart-box"><canvas id="chart8"></canvas></div>
+      <div class="bg-white p-2 rounded shadow h-[15vh] m-1 w-[7vw] chart-box"><canvas id="chart9"></canvas></div>
+      <div class="bg-white p-2 rounded shadow h-[15vh] m-1 w-[7vw] chart-box"><canvas id="chart10"></canvas></div>
+    </div>
+
+
+    <!-- Table -->
+    <div class="overflow-auto bg-white rounded-xl shadow mt-6">
+      <table class="min-w-full table-auto border-collapse border border-gray-300 text-center">
+        <thead class="bg-gray-200">
+          <tr>
+            <th class="border border-gray-300 p-2">Cat</th>
+            <th class="border border-gray-300 p-2">5%</th>
+            <th class="border border-gray-300 p-2">3%</th>
+            <th class="border border-gray-300 p-2">1%</th>
+            <th class="border border-gray-300 p-2">Avg</th>
+          </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</body>
+<script>
+  // helper to get a meta tag
+  function getCSRFToken() {
+    return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+  }
+  // django generate data 
+  const URL = API_URL + 'staff/api/report/'
+  {% if mode == 'staff' %}
+  const INFO_URL = API_URL + 'staff/api/info/staff/{{key}}/';
+  fetch(INFO_URL).then(response => response.json()).then(data => {
+    let info = document.getElementById('user-info');
+    info.innerHTML = `
+      Name: <span class="font-bold">${data.name}</span> |
+      Department: <span class="font-bold">${data.dept}</span> |
+      Batch: <span class="font-bold">{{batch}}</span> 
+    `;
+  });
+  const data = {
+    mode: "staff",
+    key: {{ key }},
+  batch: "{{batch}}"
+    };
+  {% elif mode == 'staffsub' %}
+  const INFO_URL = API_URL + 'staff/api/info/sub/{{key}}/';
+  fetch(INFO_URL).then(response => response.json()).then(data => {
+    let info = document.getElementById('user-info');
+    info.innerHTML = `
+      Name: <span class="font-bold">${data.staff.name}</span> |
+      Subject: <span class="font-bold">${data.subject.name}</span> |
+      Department: <span class="font-bold">${data.staff.dept}</span> |
+      Batch: <span class="font-bold">{{batch}}</span>
+    `;
+  });
+  const data = {
+    mode: "sub",
+    key: {{ key }},
+  sub: "{{sub}}",
+    dept : "{{dept}}",
+      batch : "{{batch}}"
+    };
+  {% elif mode == 'class' %}
+  const data = {
+    mode: "class",
+    key: "{{ sec }}",
+    sem: {{ key }},
+  dept: "{{dept}}",
+    batch : "{{batch}}"
+  };
+  let info = document.getElementById('user-info');
+  info.innerHTML = `
+      Semester: <span class="font-bold">${data.sem}</span> |
+      Section: <span class="font-bold">${data.key}</span> |
+      Department: <span class="font-bold">${data.dept}</span> |
+      Department: <span class="font-bold">${data.batch}</span> |
+  `;
+  {% endif %}
+  document.addEventListener('DOMContentLoaded', () => {
+    const csrftoken = getCSRFToken();
+    fetch(URL, {
+      method: 'POST',
+      //credentials: 'include',               // include session cookie
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrftoken,           // Django’s default header name
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then(json => {
+        const { data, terms } = json;  // matches your Python response
+        console.log(`datas : ${JSON.stringify(json)} `);
+        // ▶︎ 3. Render Charts
+        for (let idx = 0; idx < terms.length; idx++) {
+          const stats = data[`cat_${idx}`];
+          const chartId = idx + 1;
+          const ctx = document.getElementById(`chart${chartId}`).getContext('2d');
+
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ['5s', '3s', '1s'],
+              datasets: [{
+                label: terms[idx],
+                data: [
+                  stats.percentage_5s,
+                  stats.percentage_3s,
+                  stats.percentage_1s
+                ],
+                backgroundColor: ['#3b82f6', '#10b981', '#ef4444']
+              }]
+            },
+            options: {
+              plugins: { legend: { display: false } },
+              scales: { y: { beginAtZero: true }, x: { display: false } },
+              responsive: true, maintainAspectRatio: false
+            }
+          });
+        }
+
+
+        // ▶︎ 4. Build Table Body
+        const tbody = document.querySelector('table tbody');
+        tbody.innerHTML = '';
+
+        for (let idx = 0; idx < terms.length; idx++) {
+          const stats = data[`cat_${idx}`];
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="border p-2">${terms[idx]}</td>
+            <td class="border p-2">${stats.percentage_5s.toFixed(2)}</td>
+            <td class="border p-2">${stats.percentage_3s.toFixed(2)}</td>
+            <td class="border p-2">${stats.percentage_1s.toFixed(2)}</td>
+            <td class="border p-2">${stats.average.toFixed(2)}</td>
+          `;
+          tbody.appendChild(tr);
+        }
+
+      })
+      .catch(err => console.error('Dashboard error:', err));
+  });
+  document.getElementById('downloadPdf').addEventListener('click', function () {
+            const element = document.getElementById('print-container');
+            const options = {
+                margin: 1,
+                filename: `report-${data.mode}-${data.key}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } 
+            };
+
+            html2pdf().from(element).set(options).save();
+    });
+</script>
+
+</html>

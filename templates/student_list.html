@@ -1,0 +1,410 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Status Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="{% static 'js/env.js' %}"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e40af',
+                        secondary: '#dbeafe',
+                        accent: '#3b82f6'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .status-icon {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .table-container {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .filter-container {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Add spinner style */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #1e40af;
+            /* primary color */
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+            display: none;
+            /* Hidden by default */
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-secondary min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-primary mb-2">Student Status Dashboard</h1>
+            <p class="text-gray-600">Monitor and track student feedback completion status</p>
+        </div>
+
+        <!-- Filter Form -->
+        <div class="filter-container bg-white rounded-xl p-6 mb-8">
+            <h2 class="text-xl font-semibold text-primary mb-4 flex items-center">
+                <i class="fas fa-filter mr-2"></i> Filter Students
+            </h2>
+            <form id="filterForm" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text text-gray-700">Department</span>
+                    </label>
+                    <select id="dept" class="select select-bordered border-primary" required>
+                        <option value="CSE">CSE</option>
+                        <option value="ECE">ECE</option>
+                        <option value="EEE">EEE</option>
+                        <option value="MECH">MECH</option>
+                        <option value="CIVIL">CIVIL</option>
+                        <option value="AIDS">AIDS</option>
+                    </select>
+                </div>
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text text-gray-700">Batch</span>
+                    </label>
+                    <select id="batch" class="select select-bordered border-primary" required>
+                        
+                    </select>
+                </div>
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text text-gray-700">Section</span>
+                    </label>
+                    <select id="section" class="select select-bordered border-primary">
+                        <option value="">All Sections</option>
+                        <option value="A">Section A</option>
+                        <option value="B">Section B</option>
+                        <option value="C">Section C</option>
+                    </select>
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text text-gray-700">Semester</span>
+                    </label>
+                    <select id="semester" class="select select-bordered border-primary">
+                        <option value="">All Semesters</option>
+                        <option value="1">Semester 1</option>
+                        <option value="2">Semester 2</option>
+                        <option value="3">Semester 3</option>
+                        <option value="4">Semester 4</option> 
+                        <option value="5">Semester 5</option>
+                        <option value="6">Semester 6</option>
+                        <option value="7">Semester 7</option>
+                        <option value="8">Semester 8</option>
+                    </select>
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text text-gray-700">Feedback 1 Status</span>
+                    </label>
+                    <select id="feed1_status" class="select select-bordered border-primary">
+                        <option value="">All Statuses</option>
+                        <option value="true">Completed</option>
+                        <option value="false">Pending</option>
+                    </select>
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text text-gray-700">Feedback 2 Status</span>
+                    </label>
+                    <select id="feed2_status" class="select select-bordered border-primary">
+                        <option value="">All Statuses</option>
+                        <option value="true">Completed</option>
+                        <option value="false">Pending</option>
+                    </select>
+                </div>
+                <div class="form-control md:col-span-4 flex justify-end items-end">
+                    <button id="applyFiltersBtn" type="submit" class="btn bg-primary hover:bg-blue-800 text-white px-6">
+                        <i class="fas fa-search mr-2"></i> Apply Filters
+                    </button>
+                    <div id="loadingSpinner" class="spinner ml-4"></div> <!-- Spinner element -->
+                </div>
+            </form>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl p-6 shadow-md">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 mr-4">
+                        <i class="fas fa-users text-primary text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500">Total Students</p>
+                        <p id="totalStudentsStat" class="text-2xl font-bold">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl p-6 shadow-md">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 mr-4">
+                        <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500">Feedback 1 Complete</p>
+                        <p id="feed1CompleteStat" class="text-2xl font-bold">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl p-6 shadow-md">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-100 mr-4">
+                        <i class="fas fa-exclamation-circle text-yellow-500 text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500">Feedback 2 Pending</p>
+                        <p id="feed2PendingStat" class="text-2xl font-bold">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl p-6 shadow-md">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 mr-4">
+                        <i class="fas fa-chart-line text-primary text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500">Completion Rate</p>
+                        <p id="completionRateStat" class="text-2xl font-bold">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Status Table -->
+        <div class="table-container bg-white rounded-xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="table table-zebra">
+                    <thead class="bg-primary text-white">
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Section</th>
+                            <th>Semester</th>
+                            <th>Feedback 1</th>
+                            <th>Feedback 2</th>
+                            <th>Overall Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentTableBody">
+                        <!-- Sample Data Row 1 - Will be replaced by API data -->
+                        <tr class="hover:bg-blue-50">
+                            <td colspan="6" class="text-center py-4">Apply filters to load student data.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="flex justify-center mt-8">
+            <div class="join">
+                <button class="join-item btn btn-primary">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="join-item btn btn-primary btn-active">1</button>
+                <button class="join-item btn btn-primary">2</button>
+                <button class="join-item btn btn-primary">3</button>
+                <button class="join-item btn btn-primary">4</button>
+                <button class="join-item btn btn-primary">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const filterForm = document.getElementById('filterForm');
+            const studentTableBody = document.getElementById('studentTableBody');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+
+            // Stats card elements
+            const totalStudentsStat = document.getElementById('totalStudentsStat');
+            const feed1CompleteStat = document.getElementById('feed1CompleteStat');
+            const feed2PendingStat = document.getElementById('feed2PendingStat');
+            const completionRateStat = document.getElementById('completionRateStat');
+            const BATCH_UPDATE_URL = API_URL + 'staff/api/get/batch/';
+            fetch(BATCH_UPDATE_URL)
+                .then(response => response.json())
+                .then(data => {
+                    const batchSelect = document.getElementById("batch");
+                    const batches = data.batch || data.batches || []; 
+                    batches.forEach(item => {
+                        batchSelect.innerHTML += `<option value="${item}">${item}</option>`;
+                    });
+                })
+                .catch(error => console.error('Error fetching batches:', error));
+            // --- Task 2: Function to populate the table ---
+            function populateTable(students) {
+                // Clear existing table rows
+                studentTableBody.innerHTML = '';
+
+                if (!students || students.length === 0) {
+                    studentTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4">No students found for the selected filters.</td></tr>';
+                    return;
+                }
+
+                students.forEach(student => {
+                    const row = document.createElement('tr');
+                    row.classList.add('hover:bg-blue-50');
+
+                    // Determine status icons and badges
+                    const feed1Icon = student.feed1_status ?
+                        '<div class="status-icon bg-green-100 text-green-600"><i class="fas fa-check"></i></div>' :
+                        '<div class="status-icon bg-red-100 text-red-600"><i class="fas fa-times"></i></div>';
+
+                    const feed2Icon = student.feed2_status ?
+                        '<div class="status-icon bg-green-100 text-green-600"><i class="fas fa-check"></i></div>' :
+                        '<div class="status-icon bg-red-100 text-red-600"><i class="fas fa-times"></i></div>';
+
+                    const isComplete = student.feed1_status && student.feed2_status;
+                    const overallBadge = isComplete ?
+                        '<span class="badge badge-success">Complete</span>' :
+                        '<span class="badge badge-warning">Pending</span>';
+
+                    row.innerHTML = `
+                        <td>${student.student}</td>
+                        <td><span class="badge badge-primary">${student.section}</span></td>
+                        <td>${student.semester}</td>
+                        <td>${feed1Icon}</td>
+                        <td>${feed2Icon}</td>
+                        <td><div class="flex items-center">${overallBadge}</div></td>
+                    `;
+                    studentTableBody.appendChild(row);
+                });
+            }
+
+            // --- Task 2: Function to update stats cards ---
+            function updateStats(students) {
+                if (!students || students.length === 0) {
+                    totalStudentsStat.textContent = '0';
+                    feed1CompleteStat.textContent = '0';
+                    feed2PendingStat.textContent = '0';
+                    completionRateStat.textContent = '0%';
+                    return;
+                }
+
+                const total = students.length;
+                const feed1Complete = students.filter(s => s.feed1_status).length;
+                const feed2Pending = students.filter(s => !s.feed2_status).length;
+                const completionRate = total > 0 ? Math.round((students.filter(s => s.feed1_status && s.feed2_status).length / total) * 100) : 0;
+
+                totalStudentsStat.textContent = total;
+                feed1CompleteStat.textContent = feed1Complete;
+                feed2PendingStat.textContent = feed2Pending;
+                completionRateStat.textContent = `${completionRate}%`;
+            }
+
+
+            // --- Task 1: Handle form submission and API call ---
+            filterForm.addEventListener('submit', async function (e) {
+                e.preventDefault(); // Prevent default form submission
+
+                // Get filter values
+                const dept = document.getElementById('dept').value;
+                const batch = document.getElementById('batch').value;
+                const section = document.getElementById('section').value || null; // Send null if empty
+                const semester = parseInt(document.getElementById('semester').value) || null; // Send null if empty, convert to int
+                const feed1_status = document.getElementById('feed1_status').value;
+                const feed2_status = document.getElementById('feed2_status').value;
+
+                // Prepare request body
+                const requestBody = {
+                    dept: dept,
+                    batch: batch
+                };
+                if (section) requestBody.sec = section;
+                if (semester) requestBody.sem = semester;
+                
+
+                console.log("Sending request with body:", requestBody);
+
+                // Show loading spinner
+                loadingSpinner.style.display = 'block';
+
+                try {
+                    const response = await fetch(`${API_URL}api/feedback/status/`, {
+                        method: 'POST',
+                        headers: {
+                            'accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(requestBody)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API request failed with status ${response.status}`);
+                    }
+
+                    const apiData = await response.json();
+                    console.log("Received API data:", apiData);
+
+                    // --- Client-side filtering based on feedback status ---
+                    let filteredData = apiData;
+                    if (feed1_status !== "") {
+                        const feed1Bool = feed1_status === "true";
+                        filteredData = filteredData.filter(student => student.feed1_status === feed1Bool);
+                    }
+                    if (feed2_status !== "") {
+                        const feed2Bool = feed2_status === "true";
+                        filteredData = filteredData.filter(student => student.feed2_status === feed2Bool);
+                    }
+
+                    // Populate table and update stats with filtered data
+                    populateTable(filteredData);
+                    updateStats(filteredData);
+
+                } catch (error) {
+                    console.error("Error fetching or processing data:", error);
+                    studentTableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-red-500">Error loading data: ${error.message}</td></tr>`;
+                    // Reset stats on error
+                    updateStats([]); // Pass empty array to reset stats
+                } finally {
+                    // Hide loading spinner
+                    loadingSpinner.style.display = 'none';
+                }
+            });
+
+            // --- Optional: Trigger initial load if needed ---
+            // filterForm.dispatchEvent(new Event('submit')); // Uncomment to auto-load on page load with default filters
+        });
+    </script>
+</body>
+
+</html>

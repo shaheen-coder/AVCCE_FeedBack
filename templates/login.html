@@ -1,0 +1,123 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/x-icon" href="{% static 'assets/avc.png' %}">
+  <title>Login</title>
+  
+  <!-- Use only one of these CDNs for DaisyUI/TailwindCSS -->
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <style>
+    /* Optional: Add subtle animations */
+    .card {
+        animation: fadeInUp 0.5s ease-out;
+    }
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-800 to-purple-700 flex items-center justify-center p-4">
+  <!-- Main Container -->
+  <div class="flex flex-col md:flex-row items-center justify-center w-full max-w-4xl gap-8">
+    
+    <!-- Illustration/Image Section (Optional) -->
+    <div class="hidden md:flex md:w-1/2 justify-center">
+        <!-- You can replace this with an actual image or illustration -->
+        <div class="bg-white/20 backdrop-blur-sm rounded-2xl p-6 border border-white/30 shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-48 w-48 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
+            </svg>
+            <h3 class="text-xl font-semibold text-white text-center mt-4">Student Access Portal</h3>
+            <p class="text-white/80 text-center mt-2">Please log in to give your feedbacks.</p>
+        </div>
+    </div>
+
+    <!-- Login Card -->
+    <div class="card w-full max-w-md shadow-2xl bg-base-100/90 backdrop-blur-sm border border-base-200 rounded-2xl">
+      <div class="card-body p-8">
+        <!-- Logo/Title Section -->
+        <div class="flex flex-col items-center justify-center mb-6">
+            <!-- Placeholder for Logo -->
+            <div class="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16 mb-4" />
+            <h2 class="text-3xl font-bold text-center text-blue-700">Welcome Back</h2>
+        </div>
+        
+        <form action="{% url 'login' %}" method="post" class="space-y-5">
+          {% csrf_token %}
+          
+          <label class="form-control w-full">
+            <div class="label p-0 pb-2">
+              <span class="label-text font-medium text-base">Register No</span>
+            </div>
+            <input 
+                type="text" 
+                name="regno" 
+                placeholder="Enter your register number" 
+                class="input input-bordered w-full py-3 px-4 focus:input-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all duration-200" 
+                required 
+            />
+          </label>
+
+          <label class="form-control w-full">
+            <div class="label p-0 pb-2">
+              <span class="label-text font-medium text-base">Date of Birth</span>
+            </div>
+            <input 
+                type="date" 
+                name="dob" 
+                class="input input-bordered w-full py-3 px-4 focus:input-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all duration-200" 
+                required 
+            />
+          </label>
+
+          <div class="form-control mt-6">
+            <button type="submit" class="btn btn-primary w-full py-3 text-base font-semibold rounded-lg transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
+                </svg>
+                Login
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Alert (Toast Style) -->
+  {% if error %}
+  <div role="alert" class="toast toast-top toast-center z-50">
+    <div class="alert alert-error bg-red-500 text-white border-none rounded-lg shadow-lg">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>{{ error }}</span>
+      <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-1/2 transform -translate-y-1/2" onclick="this.parentElement.parentElement.remove();">✕</button>
+    </div>
+  </div>
+  {% endif %}
+
+  <script>
+    // Optional: Auto-hide toast after a few seconds
+    document.addEventListener("DOMContentLoaded", () => {
+        const toast = document.querySelector('.toast');
+        if (toast) {
+             setTimeout(() => {
+                 toast.remove();
+             }, 5000); // Hide after 5 seconds
+        }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+{% load static %}
+
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="author" content="shaheen">
+
+	<meta name="description" content="avcce"/>
+	<meta name="keywords" content="avc college of enginnering" />
+
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+	<link rel="icon" type="image/x-icon" href="{% static 'assets/avc.png' %}">	
+	<link rel="stylesheet" href="{% static 'home/fonts/icomoon/style.css' %}">
+	<link rel="stylesheet" href="{% static 'home/fonts/flaticon/font/flaticon.css' %}">
+
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+
+	<link rel="stylesheet" href="{% static 'home/css/tiny-slider.css' %} ">
+	<link rel="stylesheet" href="{% static 'home/css/aos.css' %}">
+	<link rel="stylesheet" href="{% static 'home/css/glightbox.min.css'%}">
+	<link rel="stylesheet" href="{% static 'home/css/style.css' %}">
+	<link rel="stylesheet" href="{% static 'css/flatpickr.min.css' %}">
+	<title>AVCCE</title>
+</head>
+<body>
+
+	<div class="site-mobile-menu site-navbar-target">
+		<div class="site-mobile-menu-header">
+			<div class="site-mobile-menu-close">
+				<span class="icofont-close js-menu-toggle"></span>
+			</div>
+		</div>
+		<div class="site-mobile-menu-body"></div>
+	</div>
+
+	<nav class="site-nav">
+		<div class="container">
+			<div class="menu-bg-wrap">
+				<div class="site-navigation">
+					<div class="row g-0 align-items-center">
+						<div class="col-2">
+							<a href="index.html" class="logo m-0 float-start">AVC College<span class="text-primary">.</span></a>
+						</div>
+						<div class="col-8 text-center ">
+							<ul class="js-clone-nav d-none d-lg-inline-block text-start site-menu mx-auto">
+								<li class="active"><a href="index.html">Home</a></li>
+								<li><a href="{% url 'admin:index' %}">Admin Login</a></li>
+								<li><a href="{% url 'team' %}">About Team</a></li>
+							</ul>
+						</div>
+						<div class="col-2 text-end">
+							<a href="#" class="burger ms-auto float-end site-menu-toggle js-menu-toggle d-inline-block d-lg-none light">
+								<span></span>
+							</a>
+
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</nav>
+
+	<div class="hero overlay">
+		<img src="" alt=""  class="img-fluid blob">
+		<div class="container">
+			<div class="row align-items-center justify-content-between pt-5">
+				<div class="col-lg-6 text-center text-lg-start pe-lg-5">
+					<h1 class="heading text-white mb-3" data-aos="fade-up">AVC College of enginnering</h1>
+					<p class="text-white mb-5" data-aos="fade-up" data-aos-delay="100">This is a feedback website created for AVC College of Engineering, where students can provide feedback about staff members.</p>
+					<div class="align-items-center mb-5 mm" data-aos="fade-up" data-aos-delay="200">
+						<a href="{% url 'login' %}" class="btn btn-outline-white-reverse me-4">Login</a>
+						<a href="{% url 'team' %}" class="text-white ">About Devloper</a>
+					</div>
+				</div>
+				<div class="col-lg-6" data-aos="fade-up" data-aos-delay="300">
+					<div class="img-wrap">
+						<img src="{% static 'assets/feedback.png' %}" alt="Image" class="img-fluid rounded">
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+    <!-- Preloader -->
+    <div id="overlayer"></div>
+    <div class="loader">
+    	<div class="spinner-border text-primary" role="status">
+    		<span class="visually-hidden">Loading...</span>
+    	</div>
+    </div>
+
+
+    <script src="{% static 'home/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'home/js/tiny-slider.js' %}"></script>
+
+    <script src="{% static 'home/js/flatpickr.min.js' %}"></script>
+
+
+    <script src="{% static 'home/js/aos.js' %}"></script>
+    <script src="{% static 'home/js/glightbox.min.js' %}"></script>
+    <script src="{% static 'home/js/navbar.js' %}"></script>
+    <script src="{% static 'js/counter.js' %}"></script>
+    <script src="{% static 'home/js/custom.js' %}"></script>
+  </body>
+  </html>
