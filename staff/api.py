@@ -15,6 +15,7 @@ api = NinjaAPI(
     version="1.0.0",
     description="api for staff search and staff realated feedback data",
     urls_namespace="staff-api",
+    docs_url=None,
 )
 
 

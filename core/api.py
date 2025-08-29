@@ -15,6 +15,7 @@ api = NinjaAPI(
     version="1.0.0",
     description="API for managing search data",
     urls_namespace="core-api",
+    docs_url=None,
 )
 @api.post("/student-search/", response=List[StudentOut])
 def student_search(request, data: StudentSearchSchema):
