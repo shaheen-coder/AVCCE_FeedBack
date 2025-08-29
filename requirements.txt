@@ -1,0 +1,5 @@
+Django
+django-jazzmin 
+django-ninja
+djangorestframework 
+django-import-export

@@ -1,0 +1,218 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Feedback Analysis</title>
+    <!-- env url -->
+    <script src="{% static 'js/env.js' %}"></script>
+    <!-- DaisyUI + Tailwind -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="min-h-screen bg-base-100 text-base-content p-4">
+    <div class="container mx-auto">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold">📊 Student Feedback Dashboard</h1>
+            <p class="text-gray-600">Analysis of student responses for staff performance</p>
+        </header>
+
+        <!-- Staff Info -->
+        <div class="card shadow-md bg-base-200 mb-8">
+            <div class="card-body">
+                <h2 class="card-title">👩‍🏫 Staff Information</h2>
+                <p><b id="info1">Name:</b></p>
+                <p><b id="info2">Department:</b></p>
+                <p><b id="info3"></b></p>
+            </div>
+        </div>
+
+        <!-- Grid Layout -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Category Averages -->
+            <div class="card bg-base-200 shadow-md p-4">
+                <h3 class="text-lg font-semibold mb-2">Category Averages (1–5)</h3>
+                <canvas id="categoryAveragesChart"></canvas>
+            </div>
+
+            <!-- Category Percentages -->
+            <div class="card bg-base-200 shadow-md p-4">
+                <h3 class="text-lg font-semibold mb-2">Category Percentages (%)</h3>
+                <canvas id="categoryPercentagesChart"></canvas>
+            </div>
+
+            <!-- Counts -->
+            <div class="card bg-base-200 shadow-md p-4 h-64">
+                <h3 class="text-lg font-semibold mb-2">Rating Counts</h3>
+                <div class="h-full">
+                    <canvas id="countsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Percentages -->
+            <div class="card bg-base-200 shadow-md p-4 h-64">
+                <h3 class="text-lg font-semibold mb-2">Rating Distribution (%)</h3>
+                <div class="h-full">
+                    <canvas id="percentagesChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+
+        const api_post_data = {
+            mode: "staff",
+            batch: "{{batch}}",
+            key: {{ key }},
+            sub: null,
+            sec : null,
+            dept : null
+        };
+        async function fetchFeedbackData() {
+            const response = await fetch(`${API_URL}/staff/api/analysis/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    mode: api_post_data.mode,
+                    key: api_post_data.key,
+                    sub: api_post_data.sub,
+                    sec: api_post_data.sec,
+                    dept: api_post_data.dept,
+                    batch: api_post_data.batch
+                }),
+            });
+
+            return await response.json();
+        }
+
+        function renderCharts(data) {
+            console.log(JSON.stringify(data));
+            const labels = data.terms;
+            // Category Averages
+            new Chart(document.getElementById("categoryAveragesChart"), {
+                type: "bar",
+                data: {
+                    labels,
+                    datasets: [{
+                        label: "Average Rating",
+                        data: Object.values(data.category_averages),
+                        backgroundColor: "rgba(59, 130, 246, 0.7)",
+                    }]
+                },
+                options: {
+                    scales: { y: { min: 0, max: 5, ticks: { stepSize: 1 } } },
+                    responsive: true,
+                }
+            });
+
+            // Category Percentages
+            new Chart(document.getElementById("categoryPercentagesChart"), {
+                type: "bar",
+                data: {
+                    labels,
+                    datasets: [{
+                        label: "Percentage (%)",
+                        data: Object.values(data.category_percentages),
+                        backgroundColor: "rgba(16, 185, 129, 0.7)",
+                    }]
+                },
+                options: {
+                    indexAxis: "y",
+                    scales: { x: { min: 0, max: 100 } },
+                    responsive: true,
+                }
+            });
+
+            // Rating Counts
+            new Chart(document.getElementById("countsChart"), {
+                type: "bar",
+                data: {
+                    labels: Object.keys(data.counts).map(star => `${star} ★`),
+                    datasets: [{
+                        label: "Count",
+                        data: Object.values(data.counts),
+                        backgroundColor: "rgba(245, 158, 11, 0.7)",
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                }
+            });
+
+            // Rating Distribution
+            new Chart(document.getElementById("percentagesChart"), {
+                type: "doughnut",
+                data: {
+                    labels: Object.keys(data.percentages).map(star => `${star} ★`),
+                    datasets: [{
+                        data: Object.values(data.percentages),
+                        backgroundColor: ["#f87171", "#60a5fa", "#34d399"],
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                }
+            });
+        }
+        async function load_info(id,mode) {
+            if(mode == 'staff'){
+                let api_url = `${API_URL}/staff/api/info/staff/${id}`;
+                const response = await fetch(api_url);
+                if (!response.ok) {
+                    throw new Error(`Response status: ${response.status}`);
+                }
+                let data = await response.json();
+                // Update HTML elements
+                document.getElementById("info1").innerText = `Name: ${data.name}`;
+                document.getElementById("info2").innerText = `Department: ${data.dept}`;
+                // Assuming batch & section come from subject or somewhere else:
+                document.getElementById("info3").innerHTML = `gender : ${(data.gender == true ) ? 'male' : 'female'} | <b id="info4">Batch: ${api_post_data.batch}</b>`;
+            }else if(mode == 'sub'){
+                let api_url = `${API_URL}/staff/api/info/sub/${id}/`
+                const response = await fetch(api_url);
+                if (!response.ok) {
+                    throw new Error(`Response status: ${response.status}`);
+                }
+                let data = await response.json();
+                console.log(JSON.stringify(data));
+                // Update HTML elements
+                document.getElementById("info1").innerText = `Name: ${data.staff.name}`;
+                document.getElementById("info2").innerText = `Department: ${data.staff.dept}`;
+                // Assuming batch & section come from subject or somewhere else:
+                document.getElementById("info3").innerHTML = `Subject: ${data.subject.name} | <b id="info4">Subject: ${data.subject.code}</b>`;
+
+            }else if(mode == 'class'){
+                // Update HTML elements
+                document.getElementById("info1").innerText = `Department: ${api_post_data.dept}`;
+                document.getElementById("info2").innerText = `section: ${api_post_data.sec}`;
+                // Assuming batch & section come from subject or somewhere else:
+                document.getElementById("info3").innerHTML = `Semester: ${api_post_data.key} | <b id="info4">Batch: ${api_post_data.batch}</b>`;
+            }
+        }
+        // Load everything
+        fetchFeedbackData().then(renderCharts);
+        (async () => {
+            try {
+              await load_info(api_post_data.key, api_post_data.mode);
+              console.log("Data loaded successfully!");
+            } catch (error) {
+              console.error("Failed to load data:", error);
+            }
+        })();
+    </script>
+
+
+</body>
+
+</html>

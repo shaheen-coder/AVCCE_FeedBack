@@ -1,0 +1,330 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback</title>
+    <meta name="csrfmiddlewaretoken" content="{{ csrf_token }}">
+    <!-- env js -->
+    <script src="{% static 'js/env.js' %}"></script>
+    <!-- tailwindcss -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.7/gsap.min.js"
+        integrity="sha512-f6bQMg6nkSRw/xfHw5BCbISe/dJjXrVGfz9BSDwhZtiErHwk7ifbmBEtF9vFW8UNIQPhV2uEFVyI/UHob9r7Cw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.7/ScrollTrigger.min.js"
+        integrity="sha512-AcqPGqrrAEtEwe+ADO5R8RbdFi7tuU7b/A2cJJH0Im0D18NRk5p5s4B3E5PMuO81KFw0ClN7J5SHVUJz7KOb0A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js"></script>
+    <!-- jquery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
+    <style>
+        * {
+            margin: 0px;
+            padding: 0px;
+
+        }
+
+        .question-box:hover {
+
+            transform: translateY(-5px);
+            transition: 0.2s;
+
+        }
+
+        .question-box:not(:hover) {
+            background-color: #fafafa;
+            transform: scale(0.975);
+            transition: 0.2s;
+        }
+    </style>
+
+</head>
+
+<body class="bg-blue-500">
+
+    <div id="sub-details">
+
+    </div>
+
+
+
+
+    <div class="container w-[90vw] mx-auto flex flex-wrap justify-between gap-5" id="result">
+
+        <!-- question will be generated -->
+
+    </div>
+
+
+
+
+
+    <div class="h-10 w-[90vw] my-5 mx-auto flex flex-wrap justify-between">
+        <button class=" text-base bg-white px-3 py-2 rounded-lg shadow-lg">
+            <div
+                class="font-bold  tracking-wide bg-gradient-to-r from-blue-500 to-blue-800 text-transparent bg-clip-text">
+                Prev</div>
+        </button>
+        <button class="text-base bg-white px-3 py-2 rounded-lg shadow-lg" id="next-btn">
+            <div
+                class="font-bold  tracking-wide bg-gradient-to-r from-blue-500 to-blue-800 text-transparent bg-clip-text">
+                Next</div>
+        </button>
+    </div>
+
+
+
+
+</body>
+
+<script>
+    // ── CONFIG & GLOBALS ──────────────────────────────────────────────────────────
+
+    // CSRF + URLs
+    const csrftoken = document.querySelector('meta[name="csrfmiddlewaretoken"]').content;
+    const API_SEARCH_URL = `${API_URL}api/feed/search/`;
+    const API_SUBMIT_URL = `${API_URL}drfapi/feed/submit/`;
+
+    // student & batch coming from your Django template
+    const STUDENT_ID = {{ request.session.student_id }};
+    const STUDENT_SECTION = "{{request.session.student_sec}}";
+    const BATCH = '{{ batch }}';
+    const FEED_NO = {{ request.session.student_feedno }};
+    {% if code != 'N' %}
+    const code = "{{code}}";
+    {% else %}
+    const code = null;
+    {% endif %}
+
+    {% if extra_course %}
+    const extra_course = true;
+    {% else %}
+    const extra_course = false;
+    {% endif %}
+    // payload for initial subject‑list fetch
+    const POST_PAYLOAD = {
+        id: STUDENT_ID,
+        cid: 0,
+        subid: code
+    };
+
+    // will hold the array of subjects & the user’s answers
+    let subjects = [];
+    let currentIndex = 0;
+    let allFeedback = {
+        student_id: STUDENT_ID,
+        feed_no: FEED_NO,
+        section : STUDENT_SECTION,
+        feeds: []
+    };
+    // static question labels
+    const questions = [
+        'Communication Skills of the Teacher',
+        'Delivery of Lecture and Clarity in Teaching',
+        'Ability of the Teacher to Explain a Particular Concept',
+        'Audibility of Voice and legibility in Writing',
+        'Innovative Teaching Aids',
+        'Ability of the Teacher to respond to Difficulties Faced by Student on the Subject',
+        'Availability and Approach of Teacher',
+        'Review of University of Question Papers',
+        'Relationship with student',
+        'Subject Knowledge and Preparation'
+    ];
+
+
+    // ── BOOTSTRAP ─────────────────────────────────────────────────────────────────
+
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchSubjects();
+    });
+
+
+    // ── STEP 1: FETCH SUBJECT LIST ─────────────────────────────────────────────────
+
+    async function fetchSubjects() {
+        try {
+            const res = await fetch(API_SEARCH_URL, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(POST_PAYLOAD)
+            });
+            if (!res.ok) throw new Error(`Status ${res.status}`);
+            subjects = await res.json();
+            if (!subjects.length) {
+                document.getElementById('sub-details').innerHTML =
+                    `<p class="p-5 text-red-500">No courses found.</p>`;
+                return;
+            }
+            renderSubject(currentIndex);
+        } catch (err) {
+            console.error('Error fetching subjects:', err);
+            document.getElementById('sub-details').innerHTML =
+                `<p class="p-5 text-red-500">Error fetching courses. Please try again later.</p>`;
+        }
+    }
+
+
+    // ── STEP 2: RENDER ONE SUBJECT + QUESTIONS ────────────────────────────────────
+
+    function renderSubject(idx) {
+        const subDetails = document.getElementById('sub-details');
+        const result = document.getElementById('result');
+        const item = subjects[idx];
+
+        subDetails.innerHTML = `
+        <div class="flex flex-col justify-around my-5 items-center border-b pb-5 border-blue-700">
+          <h1 class="text-3xl md:text-5xl font-bold text-gray-100 uppercase mb-2 tracking-wide">
+            ${item.dept} (Sem ${item.semester})
+          </h1>
+          <div class="flex flex-wrap justify-center items-center gap-4 border-t border-b py-3">
+            <h2 class="text-2xl font-semibold text-blue-100 uppercase">${item.subject_name}</h2>
+            <h2 class="text-2xl font-semibold text-blue-100 uppercase">${item.subject_code}</h2>
+          </div>
+        </div>`;
+
+        result.innerHTML = questions.map(q => `
+        <div class="question-box flex flex-col md:flex-row gap-y-5 justify-between items-center p-5 bg-white shadow-md rounded-lg w-full md:w-[48%]">
+          <h3 class="text-base font-medium">${q}</h3>
+          <select class="question-option border rounded px-2 py-1" required>
+            <option value="">-- select --</option>
+            <option value="5">Excellent</option>
+            <option value="3">Good</option>
+            <option value="1">Needs Improvement</option>
+          </select>
+        </div>
+      `).join('') + `
+        <textarea id="feedbackBox" name="feedbackBox"
+          placeholder="Other feedbacks..."
+          class="w-[90%] rounded-md bg-blue-100 mx-auto shadow-lg p-5 my-5 border border-blue-400 text-blue-900"
+          rows="4"></textarea>
+      `;
+    }
+
+
+    // ── STEP 3: NEXT BUTTON & COLLECT ANSWER ───────────────────────────────────────
+
+    document.getElementById('next-btn').addEventListener('click', async () => {
+        // 1. verify all questions answered
+        const opts = Array.from(document.querySelectorAll('.question-option'));
+        if (!opts.every(o => ['1', '3', '5'].includes(o.value))) {
+            return alert('Please select an option for every question.');
+        }
+
+        // 2. build categories dict
+        const categories = {};
+        questions.forEach((q, i) => {
+            categories[`cat_${i}`] = Number(opts[i].value);
+        });
+
+        // 3. grab comment
+        const msg = document.getElementById('feedbackBox').value.trim() || "nothing";
+
+        // 4. push into allFeedback
+        const item = subjects[currentIndex];
+        allFeedback['feeds'].push({
+            staff_id: item.staff_id,
+            subject_id: item.subject_code,
+            batch: BATCH,
+            dept: item.dept,
+            semester: item.semester,
+            section : STUDENT_SECTION,
+            feed: categories,
+            msg
+        });
+        console.log(JSON.stringify(allFeedback));
+        // 5. next or finish
+        currentIndex++;
+        if (currentIndex < subjects.length) {
+            renderSubject(currentIndex);
+            document.getElementById('sub-details').scrollIntoView({ behavior: 'smooth' });
+            gsap.fromTo(
+                ['#sub-details', '#result'],
+                { x: -100, opacity: 0 },
+                { x: 0, opacity: 1, duration: 1.2, ease: 'power2.inOut' }
+            );
+        } else {
+            // all done → send to API
+            await submitAllFeedback();
+        }
+    });
+
+
+    // ── STEP 4: SEND EVERYTHING TO YOUR “RESULT” ENDPOINT ─────────────────────────
+    async function student_status_update(data) {
+        const url = API_URL + 'api/feed/status/';
+        try {
+            const response = await fetch(url,{
+                method : 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            if (!response.ok) {
+                throw new Error(`Response status: ${response.status}`);
+            }
+            const json = await response.json();
+            console.log(json);
+        } catch (error) {
+            console.error(error.message);
+        }
+    }
+
+    async function submitAllFeedback() {
+        try {
+            const res = await fetch(API_SUBMIT_URL, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(allFeedback)
+            });
+            if (!res.ok) {
+                console.error('Failed to submit:', allFeedback, res.status);
+                alert('submition failed pls try again !!')
+                return null;
+            }
+            alert('All feedback submitted successfully. Thank you!');
+            if (!extra_course) {
+                await student_status_update({'id' : STUDENT_ID,'feedno' : FEED_NO })
+            }
+            window.location.href = (extra_course) ? (API_URL + 'choose/course/') : API_URL;
+        } catch (err) {
+            console.error('Error submitting feedback:', err);
+            alert('There was an error submitting your feedback. Please try again.');
+        }
+    }
+
+
+    // ── (Animations left as before) ──────────────────────────────────────────────
+
+    const lenis = new Lenis({ autoRaf: true });
+    lenis.on('scroll', () => { });
+    gsap.registerPlugin(ScrollTrigger);
+    gsap.to('.question-box', { y: -15, stagger: 0.1 });
+    document.querySelectorAll('.question-box').forEach(item => {
+        gsap.fromTo(item,
+            { opacity: 0, x: '-100%' },
+            {
+                scrollTrigger: { trigger: item, start: 'top 90%' },
+                opacity: 1, duration: 0.3, x: 0
+            }
+        );
+    });
+</script>
+
+
+</html>
