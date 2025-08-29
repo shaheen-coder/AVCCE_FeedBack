@@ -1,4 +1,4 @@
-import os 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -14,7 +14,9 @@ SECRET_KEY = 'django-insecure-&90ya8v#68i%e$g7@v65no)be)5+_mwq%d1*b^_ne&n3!wf(aa
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "avcce.pythonanywhere.com",
+    ]
 
 
 # Application definition
@@ -113,10 +115,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = "/home/avcce/AVCCE_FeedBack/static"
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static')
 ]
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -130,7 +132,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'core.AdminUser'
 
-# login redirect 
+# login redirect
 LOGIN_REDIRECT_URL = "admin:login"
 
 JAZZMIN_SETTINGS = {
