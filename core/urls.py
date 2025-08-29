@@ -8,6 +8,7 @@ urlpatterns = [
     path('feed/<str:code>/',views.FeedForm.as_view(),name='feed-form'),
     path('choose/course/',views.CourseChocie.as_view(),name='course'), # choose which course 
     path('courses/<int:cid>/',views.CourseList.as_view(),name='course-list'), # list selectd course subject 
+    path('logout/',views.logout_view,name='logout'),
     # api urls 
     path('api/',api.urls),
 ]

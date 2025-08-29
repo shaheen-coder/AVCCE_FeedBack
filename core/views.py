@@ -1,6 +1,7 @@
 from django.shortcuts import render,redirect
 from django.views.generic import TemplateView
 from django.views import View
+from django.contrib.auth import logout
 # models import 
 from core.models import Student
 from staff.models import TimeScheduler
@@ -76,3 +77,7 @@ class CourseList(View):
         sid = request.session.get('student_id',None)
         student = Student.objects.get(id=sid)
         return render(request,self.template_name,{'student':student,'cid':cid})
+
+def logout_view(request):
+    logout(request)
+    return redirect("admin:login")

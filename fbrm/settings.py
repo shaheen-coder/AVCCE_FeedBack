@@ -156,7 +156,7 @@ JAZZMIN_SETTINGS = {
     ],
 
     "welcome_sign": "Welcome to the AVCCE Admin",
-    "copyright": "VSA tech Ltd",
+    "copyright": "AVC Eng",
 
 
 }
