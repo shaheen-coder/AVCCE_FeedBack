@@ -13,6 +13,7 @@ api = NinjaAPI(
     version="1.0.0",
     description="API for prinicpal ",
     urls_namespace="hoc-api",
+    docs_url=None,
 )
 
 @api.post("/hods/create/", response={201: List[EmailStr], 400: dict})
