@@ -1,8 +1,17 @@
 from django.contrib import admin
 from core.models import AdminUser,Student,StudentBase,FeedBack
 from django.contrib.auth.admin import UserAdmin
-# excel support 
+# excel support
 from import_export.admin import ImportExportModelAdmin
+from import_export import resources
+
+
+
+
+class StudentBaseResource(resources.ModelResource):
+    class Meta:
+        model = StudentBase
+        import_id_fields = ["regno"]
 
 @admin.register(AdminUser)
 class CustomUserAdmin(UserAdmin):
@@ -14,7 +23,7 @@ class CustomUserAdmin(UserAdmin):
     def get_queryset(self,request):
         qs = super().get_queryset(request)
         print(f'user id : {request.user.id}')
-        if request.user.role == 'principal' : return qs 
+        if request.user.role == 'principal' : return qs
         elif request.user.role == 'hod' :return qs.filter(dept=request.user.dept)
         return qs.filter(id=request.user.id)
     def has_add_permission(self, request):
@@ -23,24 +32,26 @@ class CustomUserAdmin(UserAdmin):
         return super().has_add_permission(request)
 @admin.register(Student)
 class StudentAdmin(ImportExportModelAdmin):
+
     def get_queryset(self,request):
         qs = super().get_queryset(request)
-        if request.user.role == 'hoc' : return qs 
+        if request.user.role == 'hoc' : return qs
         elif request.user.role == 'hod' or  request.user.role == 'staff' : return qs.filter(student__dept=request.user.dept)
-        return qs 
+        return qs
 @admin.register(StudentBase)
 class StudentBaseAdmin(ImportExportModelAdmin):
-     def get_queryset(self,request):
+    resource_class = StudentBaseResource
+    def get_queryset(self,request):
         qs = super().get_queryset(request)
-        if request.user.role == 'hoc' : return qs 
+        if request.user.role == 'hoc' : return qs
         elif request.user.role == ('hod','staff') : return qs.filter(dept=request.user.dept)
-        return qs      
+        return qs
 @admin.register(FeedBack)
 class FeedBackAdmin(ImportExportModelAdmin):
      def get_queryset(self,request):
         qs = super().get_queryset(request)
-        if request.user.role == 'hoc' : return qs 
+        if request.user.role == 'hoc' : return qs
         elif request.user.role == 'hod': return qs.filter(dept=request.user.dept)
         elif request.user.role == 'staff' : return qs.filter(staff=request.user.staff)
 
-        return qs 
+        return qs
